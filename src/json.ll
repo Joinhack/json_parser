@@ -1,3 +1,4 @@
+
 %{
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
@@ -9,20 +10,16 @@
 #include "json.h"
 #include "json_yy.h"
 
-//#define YY_INPUT(buf,result,max_size) input_from_buf(buf, &result, max_size)
-
-
-
 void integer_overflow(char* text) {
-  yyerror("This integer is too big: \"%s\"\n", text);
+  fprintf(stderr, "This integer is too big: \"%s\"\n", text);
   exit(1);
 }
 
 %}
 
-%option lex-compat
-
 %option noyywrap
+%option bison-bridge
+%option reentrant
 
 intcosnt           ([+-]?[0-9]+)
 hexconst           ("0x"[0-9A-Za-z]+)
@@ -32,14 +29,14 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
 
 %%
 
-"false"            { yylval.bconst=0; return tok_bool_constant; }
-"true"             { yylval.bconst=1; return tok_bool_constant; }
+"false"            { yylval->bconst=0; return tok_bool_constant; }
+"true"             { yylval->bconst=1; return tok_bool_constant; }
 "null"             { return tok_null; }
 {whitespace}       { /* do nothing */                 }
 
 {intcosnt} {
   errno = 0;
-  yylval.iconst = strtoll(yytext, NULL, 10);
+  yylval->iconst = strtoll(yytext, NULL, 10);
   if (errno == ERANGE) {
     integer_overflow(yytext);
   }
@@ -48,7 +45,7 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
 
 {hexconst} {
   errno = 0;
-  yylval.iconst = strtoll(yytext+2, NULL, 16);
+  yylval->iconst = strtoll(yytext+2, NULL, 16);
   if (errno == ERANGE) {
     integer_overflow(yytext);
   }
@@ -56,7 +53,7 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
 }
 
 {dconst} {
-  yylval.dconst = atof(yytext);
+  yylval->dconst = atof(yytext);
   return tok_double_constant;
 }
 
@@ -69,7 +66,7 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
     ptr = strchr(begin, '\\');
     if(ptr == NULL) {
       memcpy(buf + pos, begin, yyleng - (begin - yytext));
-      yylval.s = buf;
+      yylval->s = buf;
       return tok_str_constant;
     } else {
       if((ptr - begin) > 0)

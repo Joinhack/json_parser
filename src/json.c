@@ -3,7 +3,6 @@
 #include "setting.h"
 #include "json.h"
 #include "json_yy.h"
-#include "json_ll.h"
 
 
 static inline int key_compare(const void *k1, const void *k2) {
@@ -90,9 +89,11 @@ json_object *json_rs_object;
 
 json_object *json_parse(char *buf, int len) {
   int rs;
-  yy_scan_bytes(buf, len);
-  rs = yyparse();
-  yylex_destroy();
+  void *scanner;
+  yylex_init(&scanner);
+  yy_scan_bytes(buf, len, scanner);
+  rs = yyparse(scanner);
+  yylex_destroy(scanner);
   if(rs != 0) {
     return NULL;
   }

@@ -1,3 +1,6 @@
+%define api.pure full
+%lex-param {void * scanner}
+%parse-param {void * scanner}
 %{
 
 #include <stdio.h>
@@ -6,7 +9,6 @@
 #define USE_SETTING
 
 #include "json.h"
-#include "json_ll.h"
 
 #define FMT_KEY(k, fmt, v) \
 k = malloc(64);\
@@ -47,10 +49,10 @@ snprintf(k, 64, fmt, v);
 %%
 
 JSON: OBJECT {
-  json_rs_object =  $1
+  json_rs_object =  $1;
 }
 | ARRAY {
-  json_rs_object =  $1
+  json_rs_object =  $1;
 }
 
 OBJECT: tok_obj_start tok_obj_end {
