@@ -28,9 +28,7 @@ intcosnt           ([+-]?[0-9]+)
 hexconst           ("0x"[0-9A-Za-z]+)
 dconst             ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 whitespace         ([ \t\r\n]*)
-unicode            ("\\u"[0-9A-Za-z]{4})
-strconst           unicode|([a-zA-Z-][\.a-zA-Z_0-9-]*)|unicode
-quoteconst         ([\"])
+strconst           ([\\\.a-zA-Z_0-9-]*)
 
 %%
 
@@ -63,8 +61,66 @@ quoteconst         ([\"])
 }
 
 {strconst} {
-  yylval.s = strdup(yytext);
-  return tok_str_constant;
+  char *buf = malloc(yyleng + 1);
+  int pos = 0;
+  char *ptr, *begin = yytext;
+  memset(buf, 0, yyleng + 1);
+  for(;;) {
+    ptr = strchr(begin, '\\');
+    if(ptr == NULL) {
+      memcpy(buf + pos, begin, yyleng - (begin - yytext));
+      yylval.s = buf;
+      return tok_str_constant;
+    } else {
+      if((ptr - begin) > 0)
+        memcpy(buf + pos, begin, ptr - begin);
+      pos += ptr - begin;
+      begin = ptr;
+    }
+    if(++ptr - yytext == yyleng) {
+      goto err;
+    }
+    switch(*ptr) {
+    case '\\':
+      buf[pos++] = '\\';
+      begin+=2;
+      continue;
+    case '"':
+      buf[pos++] = '\"';
+      begin+=2;
+      continue;
+    case '/':
+      buf[pos++] = '/';
+      begin+=2;
+      continue;
+    case 'b':
+      buf[pos++] = '\b';
+      begin+=2;
+      continue;
+    case 'f':
+      buf[pos++] = '\f';
+      begin+=2;
+      continue;
+    case 'n':
+      buf[pos++] = '\n';
+      begin+=2;
+      continue;
+    case 'r':
+      buf[pos++] = '\r';
+      begin+=2;
+      continue;
+    case 't':
+      buf[pos++] = '\t';
+      begin+=2;
+      continue;
+    case 'u':
+      
+      continue;
+    }
+  }
+  err:
+    free(buf);
+    return -1;
 }
 
 "{" {
@@ -87,14 +143,13 @@ quoteconst         ([\"])
   return tok_comma;
 }
 
-{quoteconst} {
+\" {
   return tok_quote;
 }
 
 ":" {
   return tok_colon;
 }
-
 
 %%
 

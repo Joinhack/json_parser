@@ -1,6 +1,6 @@
 
 
-default: test
+all: test
 
 lib:
 	cd src ; $(MAKE)

@@ -29,7 +29,7 @@ snprintf(k, 64, fmt, v);
 %token<iconst> tok_int_constant
 %token<dconst> tok_double_constant
 %token<bconst> tok_bool_constant
-%token tok_obj_start tok_obj_end tok_colon tok_null tok_quote tok_comma tok_array_start tok_array_end 
+%token tok_obj_start tok_obj_end tok_colon tok_null tok_quote tok_comma tok_array_start tok_array_end
 
 %type<json> OBJECT
 %type<dict> MEMBERS
@@ -140,6 +140,7 @@ STRING: tok_quote tok_quote {
   json_object *o = json_new(json_type_string);
   o->o.str.ptr = $2;
   o->o.str.len = strlen($2);
+  printf("%s", $2);
   $$ = o;
 }
 
