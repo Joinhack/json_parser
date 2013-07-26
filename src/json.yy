@@ -1,6 +1,3 @@
-%define api.pure full
-%lex-param {void * scanner}
-%parse-param {void * scanner}
 %{
 
 #include <stdio.h>
@@ -9,6 +6,7 @@
 #define USE_SETTING
 
 #include "json.h"
+
 
 #define FMT_KEY(k, fmt, v) \
 k = malloc(64);\
@@ -26,6 +24,14 @@ snprintf(k, 64, fmt, v);
   arraylist *list;
   dict *dict;
 }
+
+%{
+#include "json_ll.h"
+%}
+
+%define api.pure full
+%lex-param {void * scanner}
+%parse-param {void * scanner}
 
 %token<s>     tok_str_constant
 %token<iconst> tok_int_constant
@@ -49,10 +55,12 @@ snprintf(k, 64, fmt, v);
 %%
 
 JSON: OBJECT {
-  json_rs_object =  $1;
+  json_ctx *ctx = yyget_extra(scanner);
+  ctx->rs = $1;
 }
 | ARRAY {
-  json_rs_object =  $1;
+  json_ctx *ctx = yyget_extra(scanner);
+  ctx->rs = $1;
 }
 
 OBJECT: tok_obj_start tok_obj_end {
@@ -142,7 +150,6 @@ STRING: tok_quote tok_quote {
   json_object *o = json_new(json_type_string);
   o->o.str.ptr = $2;
   o->o.str.len = strlen($2);
-  printf("%s", $2);
   $$ = o;
 }
 

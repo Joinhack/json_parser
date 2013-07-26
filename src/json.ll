@@ -1,4 +1,3 @@
-
 %{
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
@@ -8,7 +7,7 @@
 #include <stdio.h>
 #include "setting.h"
 #include "json.h"
-#include "json_y.h"
+#include "json_yy.h"
 
 void integer_overflow(char* text) {
   fprintf(stderr, "This integer is too big: \"%s\"\n", text);
@@ -20,6 +19,7 @@ void integer_overflow(char* text) {
 %option noyywrap
 %option bison-bridge
 %option reentrant
+%option extra-type="json_ctx *"
 
 intcosnt           ([+-]?[0-9]+)
 hexconst           ("0x"[0-9A-Za-z]+)

@@ -2,7 +2,8 @@
 #include <string.h>
 #include "setting.h"
 #include "json.h"
-#include "json_y.h"
+#include "json_yy.h"
+#include "json_ll.h"
 
 
 static inline int key_compare(const void *k1, const void *k2) {
@@ -85,20 +86,12 @@ void json_free(json_object *o) {
   o->free(o);
 }
 
-json_object *json_rs_object;
-
-json_object *json_parse(char *buf, int len) {
+int json_parse(json_ctx *ctx, char *buf, int len) {
   int rs;
-  void *scanner;
-  yylex_init(&scanner);
-  yy_scan_bytes(buf, len, scanner);
-  rs = yyparse(scanner);
-  yylex_destroy(scanner);
-  if(rs != 0) {
-    return NULL;
-  }
-  return json_rs_object;
+  yylex_init(&ctx->scanner);
+  yyset_extra(ctx, ctx->scanner);
+  yy_scan_bytes(buf, len, ctx->scanner);
+  rs = yyparse(ctx->scanner);
+  yylex_destroy(ctx->scanner);
+  return rs;
 }
-
-
-

@@ -41,13 +41,17 @@ typedef struct json_object {
   void (*free)(struct json_object *obj);
 } json_object;
 
+typedef struct json_ctx {
+  void *scanner;
+  json_object *rs;
+} json_ctx;
+
+
 json_object *json_new(enum json_type);
 
 void json_free(json_object *o);
 
-json_object *json_parse(char *buff, int len);
-
-extern json_object *json_rs_object;
+int json_parse(json_ctx *ctx, char *buf, int len);
 
 extern dict_opts json_dict_opts;
 
