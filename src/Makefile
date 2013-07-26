@@ -7,17 +7,17 @@ LIBS=
 CFLAGS="-Wall" -g
 
 
-YY_PREFIX=json_yy
-LL_PREFIX=json_ll
+YY_PREFIX=json_y
+LL_PREFIX=json_l
 DEPS= ${YY_PREFIX}.o ${LL_PREFIX}.o dict.o setting.o arraylist.o json.o
 TARGET=libjson_parser.a
 
 all:$(TARGET)
 
-${LL_PREFIX}.c:json.ll
+${LL_PREFIX}.c:json.l
 	$(LEX) -o $@ $?
 
-${YY_PREFIX}.c:json.yy
+${YY_PREFIX}.c:json.y
 	mkdir -p .lib
 	$(YACC) -d -o $@ $?
 

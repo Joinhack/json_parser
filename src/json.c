@@ -2,7 +2,7 @@
 #include <string.h>
 #include "setting.h"
 #include "json.h"
-#include "json_yy.h"
+#include "json_y.h"
 
 
 static inline int key_compare(const void *k1, const void *k2) {

@@ -29,6 +29,6 @@ int main(int argc, char *argv[]) {
 
 
   long end = (long)clock();
-  //printf("clock delta: %ld\n", end - start);
+  printf("\nclock delta: %ld\n", end - start);
   return 0;
 }
