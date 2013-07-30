@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include "setting.h"
 #include "arraylist.h"
+#include "cstr.h"
 #include "dict.h"
 
 enum json_type {
@@ -29,10 +30,7 @@ typedef struct json_object {
     int64_t i;
 
     //string
-    struct {
-        char *ptr;
-        int len;
-    } str;
+    cstr str;
 
     //array
     arraylist *array;
@@ -44,6 +42,7 @@ typedef struct json_object {
 typedef struct json_ctx {
   void *scanner;
   json_object *rs;
+  cstr buf;
 } json_ctx;
 
 
@@ -51,21 +50,15 @@ json_object *json_new(enum json_type);
 
 void json_free(json_object *o);
 
+json_ctx *json_ctx_new();
+
+void json_ctx_free(json_ctx *ctx);
+
 int json_parse(json_ctx *ctx, char *buf, int len);
 
 extern dict_opts json_dict_opts;
 
-inline static void yyerror(void *scan, const char* fmt, ...) {
-  // va_list args;
-  // fprintf(stderr,
-  //         "ERROR:line:%d (last token was '%s') \n",
-  //         yylineno,
-  //         yytext);
-
-  // va_start(args, fmt);
-  // vfprintf(stderr, fmt, args);
-  // va_end(args);
-}
+void yyerror(void *scan, const char* fmt, ...);
 
 #ifdef USE_SETTING
 

@@ -29,7 +29,7 @@ void cstr_clear(cstr s);
 void cstr_tolower(cstr s);
 void cstr_toupper(cstr s);
 cstr cstr_extend(cstr s, size_t add);
-inline static cstr cstr_append_char(cstr s, char c) {
+inline static cstr cstr_cat_char(cstr s, char c) {
   cstrhdr *csh;
   if(s == NULL)
     s = cstr_create(128);

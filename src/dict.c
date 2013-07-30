@@ -58,9 +58,10 @@ void dict_replace(dict *d, void *k, void *v) {
   unsigned int hash, idx;
   dict_entry *entry;
   setting *s = get_setting();
-  if(d->size >= d->cap * DICT_RESIZE_FACTOR) dict_rehash(d, d->cap * 2);
+  if(d->size >= d->cap) dict_rehash(d, d->cap * 2);
   hash = DICT_HASH(d, k);
   idx = hash % d->cap;
+  
   entry = _dict_find(d, idx, k);
   if(entry) {
     DICT_VALUE_FREE(d, entry->value);
@@ -89,7 +90,7 @@ void dict_replace(dict *d, void *k, void *v) {
 dict_entry* dict_find(dict *d, void *k) {
   unsigned int hash, idx;
   hash = DICT_HASH(d, k);
-  idx = hash % d->size;
+  idx = hash % d->cap;
   return _dict_find(d, idx, k);
 }
 
@@ -98,7 +99,7 @@ void dict_del(dict *d, void *k) {
   setting *s = get_setting();
   dict_entry *entry, *prev = NULL;
   hash = DICT_HASH(d, k);
-  idx = hash % d->size;
+  idx = hash % d->cap;
   entry = d->entries[idx];
   while(entry) {
     if(d->opts->key_compare(entry->key, k) == 0) {

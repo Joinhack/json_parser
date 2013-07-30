@@ -1,5 +1,5 @@
 CC=gcc
-CFALGS=-I ../src  
+CFALGS=-I ../src   
 LIBS=-L../src/.lib -ljson_parser
 
 TARGET= test1 

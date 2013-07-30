@@ -9,14 +9,19 @@
 
 
 #define FMT_KEY(k, fmt, v) \
-k = malloc(64);\
-memset(k, 0, 64);\
-snprintf(k, 64, fmt, v);
+{\
+char buf[64] = {0};\
+snprintf(buf, 64, fmt, v);\
+cstr c =  cstr_new(buf, strlen(buf));\
+k = c;\
+}
+
 
 %}
 
 %union {
-  char *s;
+  cstr s;
+  int s_len;
   int64_t iconst;
   double dconst;
   int bconst;
@@ -31,13 +36,15 @@ snprintf(k, 64, fmt, v);
 
 %define api.pure full
 %lex-param {void * scanner}
+%parse-param {json_ctx *ctx}
 %parse-param {void * scanner}
 
-%token<s>     tok_str_constant
+
+%token<s>     str_const
 %token<iconst> tok_int_constant
 %token<dconst> tok_double_constant
 %token<bconst> tok_bool_constant
-%token tok_obj_start tok_obj_end tok_colon tok_null tok_quote tok_comma tok_array_start tok_array_end
+%token tok_obj_start tok_obj_end  tok_null 
 
 %type<json> OBJECT
 %type<dict> MEMBERS
@@ -49,25 +56,23 @@ snprintf(k, 64, fmt, v);
 
 %destructor {json_free($$);} VALUE ARRAY STRING OBJECT
 %destructor {arraylist_free($$);} ELEMENTS
-%destructor {free($$);} tok_str_constant
+%destructor {cstr_free($$);} str_const
 %destructor {dict_free($$);} MEMBERS PAIR
 
 %%
 
 JSON: OBJECT {
-  json_ctx *ctx = yyget_extra(scanner);
   ctx->rs = $1;
 }
 | ARRAY {
-  json_ctx *ctx = yyget_extra(scanner);
   ctx->rs = $1;
 }
 
-OBJECT: tok_obj_start tok_obj_end {
+OBJECT: '{' '}' {
   json_object *o = json_new(json_type_object);
   $$ = o;
 }
-| tok_obj_start MEMBERS tok_obj_end {
+| '{' MEMBERS '}' {
   json_object *o = json_new(json_type_object);
   o->o.dict = $2;
   $$ = o;
@@ -76,44 +81,39 @@ OBJECT: tok_obj_start tok_obj_end {
 MEMBERS: PAIR {
   $$ = $1;
 }
-| PAIR tok_comma MEMBERS {
+| PAIR ',' MEMBERS {
   dict_move($3, $1);
   dict_free($1);
   $$ = $3;
 }
 
-PAIR: tok_str_constant tok_colon VALUE {
+PAIR: str_const ':' VALUE {
   dict *d = dict_new(&json_dict_opts);
   dict_replace(d, $1, $3);
   $$ = d;
 }
-| tok_quote tok_str_constant tok_quote tok_colon VALUE {
-  dict *d = dict_new(&json_dict_opts);
-  dict_replace(d, $2, $5);
-  $$ = d;
-}
-| tok_int_constant tok_colon VALUE {
+| tok_int_constant ':' VALUE {
   char *key;
   dict *d = dict_new(&json_dict_opts);
   FMT_KEY(key, "%lld", $1);
   dict_replace(d, key, $3);
   $$ = d;
 }
-| tok_double_constant tok_colon VALUE {
+| tok_double_constant ':' VALUE {
   char *key;
   dict *d = dict_new(&json_dict_opts);
   FMT_KEY(key, "%lf", $1);
   dict_replace(d, key, $3);
   $$ = d;
 }
-|tok_null tok_colon VALUE {
+|tok_null ':' VALUE {
   char *key;
   dict *d = dict_new(&json_dict_opts);
   FMT_KEY(key, "%s", "null");
   dict_replace(d, key, $3);
   $$ = d;
 }
-|tok_bool_constant tok_colon VALUE {
+|tok_bool_constant ':' VALUE {
   char *key;
   dict *d = dict_new(&json_dict_opts);
   FMT_KEY(key, "%s", $1 == 1?"true":"false");
@@ -121,11 +121,11 @@ PAIR: tok_str_constant tok_colon VALUE {
   $$ = d;
 }
 
-ARRAY: tok_array_start tok_array_end {
+ARRAY: '[' ']' {
   json_object *o = json_new(json_type_array);
   $$ = o;
 }
-| tok_array_start ELEMENTS tok_array_end {
+| '[' ELEMENTS ']' {
   json_object *o = json_new(json_type_array);
   arraylist_move(o->o.array, $2);
   arraylist_free($2);
@@ -137,19 +137,14 @@ ELEMENTS: VALUE {
   arraylist_add(l, $1);
   $$ = l;
 }
-| VALUE tok_comma ELEMENTS {
+| VALUE ',' ELEMENTS {
   arraylist_add($3, $1);
   $$ = $3;
 }
 
-STRING: tok_quote tok_quote {
+STRING: str_const {
   json_object *o = json_new(json_type_string);
-  $$ = o;
-}
-|tok_quote tok_str_constant tok_quote {
-  json_object *o = json_new(json_type_string);
-  o->o.str.ptr = $2;
-  o->o.str.len = strlen($2);
+  o->o.str = $1;
   $$ = o;
 }
 

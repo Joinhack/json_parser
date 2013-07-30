@@ -14,6 +14,28 @@ void integer_overflow(char* text) {
   exit(1);
 }
 
+
+static inline int append_char(json_ctx *ctx, char c) {
+  ctx->buf = cstr_cat_char(ctx->buf, c);
+  return 0;
+}
+
+static inline int append_escape (json_ctx *ctx, char escape) {
+  switch(escape) {
+  case '\\': return append_char(ctx, '\\');
+  case 'n': return append_char(ctx, '\n');
+  case '/': return append_char(ctx, '/');
+  case 'r': return append_char(ctx, '\r');
+  case 't': return append_char(ctx, '\t');
+  case '"': return append_char(ctx, '"');
+  case 'b': return append_char(ctx, '\b');
+  case 'f': return append_char(ctx, '\f');
+  default:
+    return -1;
+  }
+  return 0; 
+}
+
 %}
 
 %option noyywrap
@@ -21,11 +43,14 @@ void integer_overflow(char* text) {
 %option reentrant
 %option extra-type="json_ctx *"
 
+%x STRING_STATE
+
 intcosnt           ([+-]?[0-9]+)
 hexconst           ("0x"[0-9A-Za-z]+)
 dconst             ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 whitespace         ([ \t\r\n]*)
-strconst           ([\\\.a-zA-Z_0-9-]*)
+escape             \\["\\/bfnrt]
+unicode            \\u[0-9a-fA-F]{4}
 
 %%
 
@@ -34,8 +59,7 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
 "null"             { return tok_null; }
 {whitespace}       { /* do nothing */                 }
 
-{intcosnt} {
-  errno = 0;
+<INITIAL>{intcosnt} {
   yylval->iconst = strtoll(yytext, NULL, 10);
   if (errno == ERANGE) {
     integer_overflow(yytext);
@@ -43,8 +67,7 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
   return tok_int_constant;
 }
 
-{hexconst} {
-  errno = 0;
+<INITIAL>{hexconst} {
   yylval->iconst = strtoll(yytext+2, NULL, 16);
   if (errno == ERANGE) {
     integer_overflow(yytext);
@@ -52,100 +75,32 @@ strconst           ([\\\.a-zA-Z_0-9-]*)
   return tok_int_constant;
 }
 
-{dconst} {
+<INITIAL>{dconst} {
   yylval->dconst = atof(yytext);
   return tok_double_constant;
 }
 
-{strconst} {
-  char *buf = malloc(yyleng + 1);
-  int pos = 0;
-  char *ptr, *begin = yytext;
-  memset(buf, 0, yyleng + 1);
-  for(;;) {
-    ptr = strchr(begin, '\\');
-    if(ptr == NULL) {
-      memcpy(buf + pos, begin, yyleng - (begin - yytext));
-      yylval->s = buf;
-      return tok_str_constant;
-    } else {
-      if((ptr - begin) > 0)
-        memcpy(buf + pos, begin, ptr - begin);
-      pos += ptr - begin;
-      begin = ptr;
-    }
-    if(++ptr - yytext == yyleng) {
-      goto err;
-    }
-    switch(*ptr) {
-    case '\\':
-      buf[pos++] = '\\';
-      begin+=2;
-      continue;
-    case '"':
-      buf[pos++] = '\"';
-      begin+=2;
-      continue;
-    case '/':
-      buf[pos++] = '/';
-      begin+=2;
-      continue;
-    case 'b':
-      buf[pos++] = '\b';
-      begin+=2;
-      continue;
-    case 'f':
-      buf[pos++] = '\f';
-      begin+=2;
-      continue;
-    case 'n':
-      buf[pos++] = '\n';
-      begin+=2;
-      continue;
-    case 'r':
-      buf[pos++] = '\r';
-      begin+=2;
-      continue;
-    case 't':
-      buf[pos++] = '\t';
-      begin+=2;
-      continue;
-    case 'u':
-      
-      continue;
-    }
-  }
-  err:
-    free(buf);
-    return -1;
+<INITIAL>\" {
+  BEGIN(STRING_STATE);
 }
 
-"{" {
-  return tok_obj_start;
+<INITIAL>[\[\]{},:"]   { return yytext[0]; }
+
+
+<STRING_STATE>\" {
+  BEGIN(INITIAL);
+  yyextra->buf[cstr_used(yyextra->buf)] = '\0';
+  yylval->s = yyextra->buf;
+  yyextra->buf = NULL;
+  return str_const;
 }
 
-"}" {
-  return tok_obj_end;
+<STRING_STATE>{escape} {
+  append_escape(yyextra, yytext[1]);
 }
 
-"[" {
-  return tok_array_start;
-}
-
-"]" {
-  return tok_array_end;
-}
-
-"," {
-  return tok_comma;
-}
-
-\" {
-  return tok_quote;
-}
-
-":" {
-  return tok_colon;
+<STRING_STATE>[\x20-\x7E] { 
+  append_char(yyextra, yytext[0]);
 }
 
 %%

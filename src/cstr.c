@@ -45,7 +45,10 @@ cstr cstr_extend(cstr s, size_t add) {
 
 cstr cstr_ncat(cstr s, const char *b, size_t l) {
   cstrhdr *csh;
-  s = cstr_extend(s, l);
+  if(s == NULL)
+    s = cstr_create(l);
+  else 
+    s = cstr_extend(s, l);
   csh = CSTR_HDR(s);
   memcpy(csh->buf + CSH_USED(csh), b, l);
   csh->free -= l;

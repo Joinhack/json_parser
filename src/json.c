@@ -6,8 +6,40 @@
 #include "json_ll.h"
 
 
+void yyerror(void *scan, const char* fmt, ...) {
+  va_list args;
+  fprintf(stderr,
+          "ERROR:line:%d (last token was '%s') \n",
+          yyget_lineno(scan),
+          yyget_text(scan));
+
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+}
+
+json_ctx *json_ctx_new() {
+  json_ctx *ctx;
+  setting *setting = get_setting();
+  ctx = setting->malloc(sizeof(struct json_ctx));
+  memset(ctx, 0, sizeof(sizeof(struct json_ctx)));
+  return ctx;
+}
+
+void json_ctx_free(json_ctx *ctx) {
+  setting *setting = get_setting();
+  if(ctx->rs)
+    json_free(ctx->rs);
+  setting->free(ctx);
+}
+
+void json_ctx_free(json_ctx *ctx);
+
 static inline int key_compare(const void *k1, const void *k2) {
-  return strcmp((char*)k1, (char*)k2);
+  int l1 = cstr_used((cstr)k1);
+  if(l1 != cstr_used((cstr)k2))
+    return -1;
+  return memcmp(k1, k2, l1);
 }
 
 static inline void _general_free(void *o) {
@@ -19,25 +51,28 @@ static inline void _json_free(json_object *o) {
   _general_free((void*)o);
 }
 
+static inline void key_free(void *o) {
+  cstr_free((cstr)o);
+}
+
 static inline void json_value_free(void *v) {
   json_free((json_object*)v);
 }
 
 static inline unsigned int json_key_hash(const void *key) {
-  return dict_generic_hash(key, strlen(key));
+  return dict_generic_hash(key, cstr_used((cstr)key));
 }
 
 dict_opts json_dict_opts = {
   .hash = json_key_hash,
   .key_compare = key_compare,
-  .key_free = _general_free,
+  .key_free = key_free,
   .value_free = json_value_free
 };
 
 static inline void json_string_free(json_object *o) {
-  setting *setting = get_setting();
-  if(o->o.str.ptr)
-    setting->free(o->o.str.ptr);
+  if(o->o.str)
+    cstr_free(o->o.str);
   _json_free(o);
 }
 
@@ -91,7 +126,7 @@ int json_parse(json_ctx *ctx, char *buf, int len) {
   yylex_init(&ctx->scanner);
   yyset_extra(ctx, ctx->scanner);
   yy_scan_bytes(buf, len, ctx->scanner);
-  rs = yyparse(ctx->scanner);
+  rs = yyparse(ctx, ctx->scanner);
   yylex_destroy(ctx->scanner);
   return rs;
 }

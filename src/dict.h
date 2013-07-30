@@ -41,8 +41,6 @@ dict_entry* dict_find(dict *d, void *k);
 
 unsigned int dict_generic_hash(const char *buf, size_t len);
 
-#define DICT_RESIZE_FACTOR 0.9
-
 #define DICT_KEY_FREE(d, k) if(d->opts->key_free) d->opts->key_free(k)
 
 #define DICT_HASH(d, k) (d->opts->hash(k))
