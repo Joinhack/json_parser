@@ -9,7 +9,7 @@ CFLAGS="-Wall" -g
 
 YY_PREFIX=json_yy
 LL_PREFIX=json_ll
-DEPS=${LL_PREFIX}.o ${YY_PREFIX}.o   dict.o setting.o arraylist.o json.o cstr.o
+DEPS=${LL_PREFIX}.o ${YY_PREFIX}.o   dict.o setting.o arraylist.o json.o cstr.o codec.o
 TARGET=libjson_parser.a
 
 all:$(TARGET)

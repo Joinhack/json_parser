@@ -20,6 +20,20 @@ static inline int append_char(json_ctx *ctx, char c) {
   return 0;
 }
 
+static inline int append_unicode(json_ctx *ctx, const char *ptr) {
+  unsigned char utf8[4];
+  char *end_ptr;
+  long ucs2;
+  int rs;
+  ucs2 = strtol (ptr, & end_ptr, 16);
+  rs = ucs2_to_utf8(ucs2, utf8);
+  if(rs < 0)
+    return -1;
+  ctx->buf = cstr_ncat(ctx->buf, (char*)utf8, rs);
+
+  return 0;
+}
+
 static inline int append_escape (json_ctx *ctx, char escape) {
   switch(escape) {
   case '\\': return append_char(ctx, '\\');
@@ -97,6 +111,10 @@ unicode            \\u[0-9a-fA-F]{4}
 
 <STRING_STATE>{escape} {
   append_escape(yyextra, yytext[1]);
+}
+
+<STRING_STATE>{unicode} {
+  append_unicode(yyextra, yytext + 2);
 }
 
 <STRING_STATE>[\x20-\x7E] { 

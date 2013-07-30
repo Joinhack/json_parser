@@ -8,6 +8,7 @@
 #include "arraylist.h"
 #include "cstr.h"
 #include "dict.h"
+#include "codec.h"
 
 enum json_type {
   json_type_null,

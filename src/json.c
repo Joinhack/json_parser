@@ -22,7 +22,7 @@ json_ctx *json_ctx_new() {
   json_ctx *ctx;
   setting *setting = get_setting();
   ctx = setting->malloc(sizeof(struct json_ctx));
-  memset(ctx, 0, sizeof(sizeof(struct json_ctx)));
+  memset(ctx, 0, sizeof(struct json_ctx));
   return ctx;
 }
 

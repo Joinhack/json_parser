@@ -24,16 +24,28 @@ int main(int argc, char *argv[]) {
 
   p = "{\"a1asd\":\"\\\\\\b\\naaa\",2:0.2}";
   k = cstr_new("a1asd", 5);
+  printf("%p\n", k);
   for(i = 0; i < 1; i++) {
     ctx = json_ctx_new();
     j = json_parse(ctx, p, strlen(p));
     if(!j) {
       cstr val = ((json_object*)(dict_find(ctx->rs->o.dict, k)->value))->o.str;
-      printf("len:%d,%d %s", cstr_used(val),cstr_len(val), val);
+      printf("len:%d,%d %s\n", cstr_used(val),cstr_len(val), val);
     }
     
     json_ctx_free(ctx);
   }
+  printf("%p\n", k);
+  cstr_free(k);
+
+  p = "{\"\\ud840\\udd26\":\"\\ud840\\udd27\"}";
+  ctx = json_ctx_new();
+  j = json_parse(ctx, p, strlen(p));
+  printf("unicode parse result:%d, %d\n", j, ctx->rs->o.dict->size);
+  k = (cstr)ctx->rs->o.dict->head->key;
+  write(0, k, cstr_used(k));
+  json_ctx_free(ctx);
+
 
   long end = (long)clock();
   printf("\nclock delta: %ld\n", end - start);
