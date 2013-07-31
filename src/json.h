@@ -44,6 +44,8 @@ typedef struct json_ctx {
   void *scanner;
   json_object *rs;
   cstr buf;
+  cstr err;
+  cstr token;
 } json_ctx;
 
 
@@ -59,7 +61,7 @@ int json_parse(json_ctx *ctx, char *buf, int len);
 
 extern dict_opts json_dict_opts;
 
-void yyerror(void *scan, const char* fmt, ...);
+void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...);
 
 #ifdef USE_SETTING
 

@@ -24,7 +24,6 @@ int main(int argc, char *argv[]) {
 
   p = "{\"a1asd\":\"\\\\\\b\\naaa\",2:0.2}";
   k = cstr_new("a1asd", 5);
-  printf("%p\n", k);
   for(i = 0; i < 1; i++) {
     ctx = json_ctx_new();
     j = json_parse(ctx, p, strlen(p));
@@ -35,15 +34,35 @@ int main(int argc, char *argv[]) {
     
     json_ctx_free(ctx);
   }
-  printf("%p\n", k);
+
   cstr_free(k);
 
-  p = "{\"\\ud840\\udd26\":\"\\ud840\\udd27\"}";
+  p = "{\"\\u4e2d\\u6587\":\"\\u6d4b\\u8bd5\"}";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
   printf("unicode parse result:%d, %d\n", j, ctx->rs->o.dict->size);
   k = (cstr)ctx->rs->o.dict->head->key;
-  write(0, k, cstr_used(k));
+  printf("key:%s ", k);
+
+  printf("\n");
+  json_ctx_free(ctx);
+
+  p = "{\"中文\":\"\\u6d4b\\u8bd5\"}";
+  ctx = json_ctx_new();
+  j = json_parse(ctx, p, strlen(p));
+  printf("%d\n", j);
+  printf("unicode parse result:%d, %d\n", j, ctx->rs->o.dict->size);
+  k = (cstr)ctx->rs->o.dict->head->key;
+  printf("key:%s ", k);
+
+  printf("\n");
+  json_ctx_free(ctx);
+
+
+  p = "[{\"1\":\"2\",}]";
+  ctx = json_ctx_new();
+  j = json_parse(ctx, p, strlen(p));
+  printf("should error %d, msg:%s, token:%s\n", j, ctx->err, ctx->token);
   json_ctx_free(ctx);
 
 

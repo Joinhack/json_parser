@@ -1,14 +1,17 @@
 CC=gcc
-CFALGS=-I ../src   
-LIBS=-L../src/.lib -ljson_parser
+CFLAGS=-I ../src   -g
 
-TARGET= test1 
+TARGET= test1 cstr_test
 
-all: test1
+LIBS=../src/.lib/libjson_parser.a
 
+all: $(TARGET)
 
-test1: test1.c
-	$(CC) -o $@ $^  $(CFALGS) $(LIBS)
+test1: test1.o
+	$(CC) -o $@ $< $(LIBS)
+
+cstr_test: cstr_test.o
+	$(CC) -o $@ $< $(LIBS)
 
 clean:
-	rm -rf $(TARGET)
+	rm -rf $(TARGET) *.o

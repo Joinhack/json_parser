@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 #include "cstr.h"
 #include "setting.h"
 
@@ -46,9 +48,8 @@ cstr cstr_extend(cstr s, size_t add) {
 cstr cstr_ncat(cstr s, const char *b, size_t l) {
   cstrhdr *csh;
   if(s == NULL)
-    s = cstr_create(l);
-  else 
-    s = cstr_extend(s, l);
+    return cstr_new(b, l);
+  s = cstr_extend(s, l);
   csh = CSTR_HDR(s);
   memcpy(csh->buf + CSH_USED(csh), b, l);
   csh->free -= l;
@@ -60,6 +61,38 @@ void cstr_clear(cstr s) {
   cstrhdr *csh = CSTR_HDR(s);
   csh->free = csh->len;
   csh->buf[0] = '\0';
+}
+
+cstr cstr_cat_vprintf(cstr s, const char *fmt, va_list arg) {
+  va_list cpy;
+  setting *setting = get_setting();
+  char *buf, *t;
+  size_t buflen = 16;
+
+  while(1) {
+    buf = setting->malloc(buflen);
+    if (buf == NULL) return NULL;
+    buf[buflen-2] = '\0';
+    va_copy(cpy, arg);
+    vsnprintf(buf, buflen, fmt, cpy);
+    if (buf[buflen-2] != '\0') {
+        setting->free(buf);
+        buflen *= 2;
+        continue;
+    }
+    break;
+  }
+  t = cstr_ncat(s, buf, strlen(buf));
+  setting->free(buf);
+  return t;
+}
+
+cstr cstr_cat_printf(cstr s, const char *fmt, ...) {
+  va_list arg;
+  va_start(arg, fmt);
+  s = cstr_cat_vprintf(s, fmt, arg);
+  va_end(arg);
+  return s;
 }
 
 void cstr_tolower(cstr s) {

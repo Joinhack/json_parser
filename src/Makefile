@@ -3,32 +3,31 @@ AR=ar
 RANLIB=ranlib
 YACC=bison
 LEX=flex
-LIBS=
+LDFLAGS=
 CFLAGS="-Wall" -g
 
 
 YY_PREFIX=json_yy
 LL_PREFIX=json_ll
-DEPS=${LL_PREFIX}.o ${YY_PREFIX}.o   dict.o setting.o arraylist.o json.o cstr.o codec.o
+DEPS=${LL_PREFIX}.o ${YY_PREFIX}.o dict.o setting.o arraylist.o json.o cstr.o codec.o
 TARGET=libjson_parser.a
+OUTDIR=.lib
 
 all:$(TARGET)
 
 ${LL_PREFIX}.c:json.ll
-	mkdir -p .lib
+	mkdir -p $(OUTDIR)
 	$(YACC) -d -o $(YY_PREFIX).c json.yy
 	$(LEX) --header-file=$(LL_PREFIX).h -o $@ $?
 
 $(YY_PREFIX).c: json.yy
 	$(YACC) -d -o $(YY_PREFIX).c $^
 
-
-
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o	.lib/$@ $^
+	$(CC) $(CFLAGS) -c -o	$(OUTDIR)/$@ $^
 
 $(TARGET): $(DEPS)
-	cd .lib ; $(AR) -rcs $@ $^; $(RANLIB) $@
+	cd $(OUTDIR) ; $(AR) -rcs $@ $^; $(RANLIB) $@
 
 clean:
 	rm -rf .lib

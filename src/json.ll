@@ -9,10 +9,11 @@
 #include "json.h"
 #include "json_yy.h"
 
-void integer_overflow(char* text) {
-  fprintf(stderr, "This integer is too big: \"%s\"\n", text);
-  exit(1);
-}
+
+#define ERROR(fmt, arg...) yyerror(yyextra, yyscanner, fmt, ##arg)
+
+#define integer_overflow(text) \
+  ERROR("This integer is too big: \"%s\"\n", text)
 
 
 static inline int append_char(json_ctx *ctx, char c) {
@@ -65,6 +66,9 @@ dconst             ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 whitespace         ([ \t\r\n]*)
 escape             \\["\\/bfnrt]
 unicode            \\u[0-9a-fA-F]{4}
+utf8_2             [\xC2-\xDF][\x80-\xBF]
+utf8_3             [\xE1-\xEF][\x80-\xBF]{2}
+utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 
 %%
 
@@ -77,6 +81,7 @@ unicode            \\u[0-9a-fA-F]{4}
   yylval->iconst = strtoll(yytext, NULL, 10);
   if (errno == ERANGE) {
     integer_overflow(yytext);
+    return -1;
   }
   return tok_int_constant;
 }
@@ -85,6 +90,7 @@ unicode            \\u[0-9a-fA-F]{4}
   yylval->iconst = strtoll(yytext+2, NULL, 16);
   if (errno == ERANGE) {
     integer_overflow(yytext);
+    return -1;
   }
   return tok_int_constant;
 }
@@ -100,6 +106,10 @@ unicode            \\u[0-9a-fA-F]{4}
 
 <INITIAL>[\[\]{},:"]   { return yytext[0]; }
 
+<INITIAL>.   { 
+  ERROR("unknown character\n");
+  return -1;
+}
 
 <STRING_STATE>\" {
   BEGIN(INITIAL);
@@ -117,8 +127,31 @@ unicode            \\u[0-9a-fA-F]{4}
   append_unicode(yyextra, yytext + 2);
 }
 
+<STRING_STATE>{utf8_2} { 
+  append_char(yyextra, yytext[0]);
+  append_char(yyextra, yytext[1]);
+}
+
+<STRING_STATE>{utf8_3} { 
+  append_char(yyextra, yytext[0]);
+  append_char(yyextra, yytext[1]);
+  append_char(yyextra, yytext[2]);
+}
+
+<STRING_STATE>{utf8_4} { 
+  append_char(yyextra, yytext[0]);
+  append_char(yyextra, yytext[1]);
+  append_char(yyextra, yytext[2]);
+  append_char(yyextra, yytext[3]);
+}
+
 <STRING_STATE>[\x20-\x7E] { 
   append_char(yyextra, yytext[0]);
+}
+
+<STRING_STATE>. {
+  ERROR("unknown character in string token\n");
+  return -1;
 }
 
 %%

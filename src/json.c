@@ -1,21 +1,18 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "setting.h"
 #include "json.h"
 #include "json_yy.h"
 #include "json_ll.h"
 
 
-void yyerror(void *scan, const char* fmt, ...) {
-  va_list args;
-  fprintf(stderr,
-          "ERROR:line:%d (last token was '%s') \n",
-          yyget_lineno(scan),
-          yyget_text(scan));
-
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
+void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...) {
+  va_list arg;
+  ctx->token = cstr_ncat(ctx->token, yyget_text(scan), yyget_leng(scan));
+  va_start(arg, fmt);
+  ctx->err = cstr_cat_printf(ctx->err, fmt, arg);
+  va_end(arg);
 }
 
 json_ctx *json_ctx_new() {
@@ -28,6 +25,10 @@ json_ctx *json_ctx_new() {
 
 void json_ctx_free(json_ctx *ctx) {
   setting *setting = get_setting();
+  if(ctx->err)
+    cstr_free(ctx->err);
+  if(ctx->token)
+    cstr_free(ctx->token);
   if(ctx->rs)
     json_free(ctx->rs);
   setting->free(ctx);
@@ -124,6 +125,7 @@ void json_free(json_object *o) {
 int json_parse(json_ctx *ctx, char *buf, int len) {
   int rs;
   yylex_init(&ctx->scanner);
+  yyset_debug(1, ctx->scanner);
   yyset_extra(ctx, ctx->scanner);
   yy_scan_bytes(buf, len, ctx->scanner);
   rs = yyparse(ctx, ctx->scanner);
