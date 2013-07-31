@@ -9,6 +9,8 @@
 #include "json.h"
 #include "json_yy.h"
 
+#define COLNO_ADD(i) (yyextra->colno += i)
+
 
 #define ERROR(fmt, arg...) yyerror(yyextra, yyscanner, fmt, ##arg)
 
@@ -64,7 +66,7 @@ static inline int append_escape (json_ctx *ctx, char escape) {
 intcosnt           ([+-]?[0-9]+)
 hexconst           ("0x"[0-9A-Za-z]+)
 dconst             ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
-whitespace         ([ \t\r\n]*)
+whitespace         ([ \t\r]*)
 escape             \\["\\/bfnrt]
 unicode            \\u[0-9a-fA-F]{4}
 utf8_2             [\xC2-\xDF][\x80-\xBF]
@@ -73,10 +75,31 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 
 %%
 
-<INITIAL>false            { yylval->bconst=0; return tok_bool_constant; }
-<INITIAL>true             { yylval->bconst=1; return tok_bool_constant; }
-<INITIAL>null             { return tok_null; }
-<INITIAL>{whitespace}     { /* do nothing */                 }
+<INITIAL>false { 
+  COLNO_ADD(yyleng);
+  yylval->bconst=0; 
+  return tok_bool_constant;
+}
+
+<INITIAL>true {
+  COLNO_ADD(yyleng);
+  yylval->bconst=1; 
+  return tok_bool_constant; 
+}
+
+<INITIAL>null {
+  COLNO_ADD(yyleng);
+  return tok_null; 
+}
+
+<INITIAL>{whitespace} {
+  COLNO_ADD(yyleng);
+}
+
+<INITIAL>[\n] {
+  yyextra->lineno++;
+  yyextra->colno = 0;
+}
 
 <INITIAL>{intcosnt} {
   yylval->iconst = strtoll(yytext, NULL, 10);
@@ -84,6 +107,7 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
     integer_overflow(yytext);
     return -1;
   }
+  COLNO_ADD(yyleng);
   return tok_int_constant;
 }
 
@@ -93,22 +117,24 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
     integer_overflow(yytext);
     return -1;
   }
+  COLNO_ADD(yyleng);
   return tok_int_constant;
 }
 
 <INITIAL>{dconst} {
   yylval->dconst = atof(yytext);
+  COLNO_ADD(yyleng);
   return tok_double_constant;
 }
 
 <INITIAL>\" {
+  COLNO_ADD(1);
   BEGIN(STRING_STATE);
 }
 
-<INITIAL>[\[\]{},:"]   { return yytext[0]; }
+<INITIAL>[\[\]{},:"]   { COLNO_ADD(1); return yytext[0]; }
 
-<INITIAL>.   { 
-  ERROR("unknown character\n");
+<INITIAL>.   {
   return -1;
 }
 
@@ -118,27 +144,32 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
     yyextra->buf[cstr_used(yyextra->buf)] = '\0';
 
   yylval->s = yyextra->buf;
-  yyextra->buf = NULL;  
+  yyextra->buf = NULL;
+  COLNO_ADD(1);
   return str_const;
 }
 
 <STRING_STATE>{escape} {
   append_escape(yyextra, yytext[1]);
+  COLNO_ADD(2);
 }
 
 <STRING_STATE>{unicode} {
   append_unicode(yyextra, yytext + 2);
+  COLNO_ADD(5);
 }
 
 <STRING_STATE>{utf8_2} { 
   append_char(yyextra, yytext[0]);
   append_char(yyextra, yytext[1]);
+  COLNO_ADD(2);
 }
 
 <STRING_STATE>{utf8_3} { 
   append_char(yyextra, yytext[0]);
   append_char(yyextra, yytext[1]);
   append_char(yyextra, yytext[2]);
+  COLNO_ADD(3);
 }
 
 <STRING_STATE>{utf8_4} { 
@@ -146,14 +177,15 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
   append_char(yyextra, yytext[1]);
   append_char(yyextra, yytext[2]);
   append_char(yyextra, yytext[3]);
+  COLNO_ADD(4);
 }
 
 <STRING_STATE>[\x20-\x7E] { 
   append_char(yyextra, yytext[0]);
+  COLNO_ADD(1);
 }
 
 <STRING_STATE>. {
-  ERROR("unknown character in string token\n");
   return -1;
 }
 

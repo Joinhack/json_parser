@@ -45,6 +45,8 @@ typedef struct json_ctx {
   json_object *rs;
   cstr buf;
   cstr err;
+  int lineno;
+  int colno;
   cstr token;
 } json_ctx;
 

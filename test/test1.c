@@ -15,11 +15,13 @@ int main(int argc, char *argv[]) {
   
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
+  printf("result %d\n", j);
   json_ctx_free(ctx);
   
   p = "[{\"1\":\"2\"}]";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
+  printf("result %d\n", j);
   json_ctx_free(ctx);
 
   p = "{\"a1asd\":\"\\\\\\b\\naaa\",2:0.2}";
@@ -57,17 +59,17 @@ int main(int argc, char *argv[]) {
   printf("\n");
   json_ctx_free(ctx);
 
-  p = "[1]";
+  p = "\n[1   \n]\n";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
   printf("value:%lld \n", json_get(ctx->rs, "0")->o.i);
   json_ctx_free(ctx);  
 
 
-  p = "[{ \"1\":\"\",}]";
+  p = "a[{ \"1\":\"\"  \n\n  ,           }]";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
-  printf("should error %d, msg:%s, token:%s\n", j, ctx->err, ctx->token);
+  printf("error:%s, line:%d col:%d token:%s\n", ctx->err, ctx->lineno, ctx->colno ,ctx->token);
   json_ctx_free(ctx);
 
   ctx = json_ctx_new();
@@ -81,6 +83,8 @@ int main(int argc, char *argv[]) {
   FILE *f = fopen(path,"r");
   j = json_parse_file(ctx, f);
   printf("parse file result: %d\n", j);
+  if(j)
+    printf("error:%s, line:%d col:%d token:%s\n", ctx->err, ctx->lineno, ctx->colno ,ctx->token);
   fclose(f);
   cstr_free(path);
   json_ctx_free(ctx);

@@ -10,6 +10,7 @@
 void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...) {
   va_list arg;
   ctx->token = cstr_ncat(ctx->token, yyget_text(scan), yyget_leng(scan));
+  ctx->token[cstr_used(ctx->token)] = 0;
   va_start(arg, fmt);
   ctx->err = cstr_cat_printf(ctx->err, fmt, arg);
   va_end(arg);
@@ -20,6 +21,8 @@ json_ctx *json_ctx_new() {
   setting *setting = get_setting();
   ctx = setting->malloc(sizeof(struct json_ctx));
   memset(ctx, 0, sizeof(struct json_ctx));
+  ctx->lineno = 1;
+  ctx->colno = 0;
   return ctx;
 }
 
