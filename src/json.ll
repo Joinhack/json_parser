@@ -114,9 +114,11 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 
 <STRING_STATE>\" {
   BEGIN(INITIAL);
-  yyextra->buf[cstr_used(yyextra->buf)] = '\0';
+  if(yyextra->buf)
+    yyextra->buf[cstr_used(yyextra->buf)] = '\0';
+
   yylval->s = yyextra->buf;
-  yyextra->buf = NULL;
+  yyextra->buf = NULL;  
   return str_const;
 }
 

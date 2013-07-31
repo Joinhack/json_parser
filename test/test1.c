@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   json_ctx_free(ctx);  
 
 
-  p = "[{ \"1\":\"2\",}]";
+  p = "[{ \"1\":\"\",}]";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
   printf("should error %d, msg:%s, token:%s\n", j, ctx->err, ctx->token);
