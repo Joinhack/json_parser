@@ -125,10 +125,20 @@ void json_free(json_object *o) {
 int json_parse(json_ctx *ctx, char *buf, int len) {
   int rs;
   yylex_init(&ctx->scanner);
-  yyset_debug(1, ctx->scanner);
   yyset_extra(ctx, ctx->scanner);
   yy_scan_bytes(buf, len, ctx->scanner);
   rs = yyparse(ctx, ctx->scanner);
   yylex_destroy(ctx->scanner);
   return rs;
 }
+
+int json_parse_file(json_ctx *ctx, FILE *file) {
+  int rs;
+  yylex_init(&ctx->scanner);
+  yyset_extra(ctx, ctx->scanner);
+  yyset_in(file, ctx->scanner);
+  rs = yyparse(ctx, ctx->scanner);
+  yylex_destroy(ctx->scanner);
+  return rs;
+}
+

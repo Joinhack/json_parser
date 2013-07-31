@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[]) {
   int i;
-  char *p ="{\"null\":[0x12]}";
+  char *ptr,*p ="{\"null\":[0x12]}";
   long start = (long)clock();
   int j;
   cstr k;
@@ -59,10 +59,25 @@ int main(int argc, char *argv[]) {
   json_ctx_free(ctx);
 
 
-  p = "[{\"1\":\"2\",}]";
+  p = "[{ \"1\":\"2\",}]";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
   printf("should error %d, msg:%s, token:%s\n", j, ctx->err, ctx->token);
+  json_ctx_free(ctx);
+
+  ctx = json_ctx_new();
+  cstr path = cstr_create(128);
+  ptr = rindex(argv[0], '/');
+  if(ptr != NULL) {
+    cstr_ncat(path, argv[0], ptr - argv[0]);
+    cstr_cat_char(path, '/');
+  }
+  cstr_cat(path, "test1.json");
+  FILE *f = fopen(path,"r");
+  j = json_parse_file(ctx, f);
+  printf("parse file result: %d\n", j);
+  fclose(f);
+  cstr_free(path);
   json_ctx_free(ctx);
 
 

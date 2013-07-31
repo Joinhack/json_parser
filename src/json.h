@@ -59,6 +59,8 @@ void json_ctx_free(json_ctx *ctx);
 
 int json_parse(json_ctx *ctx, char *buf, int len);
 
+int json_parse_file(json_ctx *ctx, FILE *file);
+
 extern dict_opts json_dict_opts;
 
 void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...);

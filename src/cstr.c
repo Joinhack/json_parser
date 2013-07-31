@@ -57,6 +57,27 @@ cstr cstr_ncat(cstr s, const char *b, size_t l) {
   return (cstr)csh->buf;
 }
 
+cstr* cstr_split(char *s, size_t len, const char *b, size_t slen, size_t *l) {
+  setting *setting = get_setting();
+  cstr *array = NULL;
+  size_t i, cap = 0, size = 0, beg = 0;
+  array = setting->malloc(sizeof(cstr)*cap);
+  for(i = 0; i < len - (slen - 1); i++) {
+    if(size + 1 >= cap ) {
+      cap += 5;
+      array = setting->realloc(array, sizeof(cstr)*cap);
+    }
+    if(s[i] == b[0] && memcmp(s + i, b, slen) == 0) {
+      array[size] = cstr_new(s + beg, i - beg);
+      beg = i + slen;
+      size++;
+    }
+  }
+  array[size++] = cstr_new(s + beg, len - beg);
+  *l = size;
+  return array;
+}
+
 void cstr_clear(cstr s) {
   cstrhdr *csh = CSTR_HDR(s);
   csh->free = csh->len;

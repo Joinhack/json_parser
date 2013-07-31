@@ -31,6 +31,11 @@ cstr cstr_cat_vprintf(cstr s, const char *fmt, va_list arg);
 cstr cstr_cat_printf(cstr s, const char *fmt, ...);
 void cstr_toupper(cstr s);
 cstr cstr_extend(cstr s, size_t add);
+cstr* cstr_split(char *s, size_t len, const char *b, size_t slen, size_t *l);
+inline static cstr cstr_cat(cstr s, const char *b) {
+  return cstr_ncat(s, b, strlen(b));
+}
+
 inline static cstr cstr_cat_char(cstr s, char c) {
   cstrhdr *csh;
   if(s == NULL)

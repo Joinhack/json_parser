@@ -53,6 +53,7 @@ static inline int append_escape (json_ctx *ctx, char escape) {
 
 %}
 
+
 %option noyywrap
 %option bison-bridge
 %option reentrant
@@ -72,10 +73,10 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 
 %%
 
-"false"            { yylval->bconst=0; return tok_bool_constant; }
-"true"             { yylval->bconst=1; return tok_bool_constant; }
-"null"             { return tok_null; }
-{whitespace}       { /* do nothing */                 }
+<INITIAL>false            { yylval->bconst=0; return tok_bool_constant; }
+<INITIAL>true             { yylval->bconst=1; return tok_bool_constant; }
+<INITIAL>null             { return tok_null; }
+<INITIAL>{whitespace}     { /* do nothing */                 }
 
 <INITIAL>{intcosnt} {
   yylval->iconst = strtoll(yytext, NULL, 10);
