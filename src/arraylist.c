@@ -13,9 +13,9 @@ arraylist *arraylist_new() {
 }
 
 void arraylist_add(arraylist *l, struct json_object *o) {
-  if(l->cap == l->len) {
+  if(l->len >= l->cap) {
     setting *setting = get_setting();
-    l->cap += 10;
+    l->cap = (l->len + 2)*2;
     l->vec = setting->realloc(l->vec, sizeof(struct json_object*) * l->cap);
   }
   l->vec[l->len++] = o;

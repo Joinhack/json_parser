@@ -7,12 +7,8 @@ static setting default_setting = {
   .free = free
 };
 
-static setting *current_setting = &default_setting;
+setting *current_setting = &default_setting;
 
 void set_setting(setting *s) {
   current_setting = s;
-}
-
-setting *get_setting() {
-  return current_setting;
 }

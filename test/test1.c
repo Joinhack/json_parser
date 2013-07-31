@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     j = json_parse(ctx, p, strlen(p));
     if(!j) {
       cstr val = ((json_object*)(dict_find(ctx->rs->o.dict, k)->value))->o.str;
-      printf("len:%d,%d %s\n", cstr_used(val),cstr_len(val), val);
+      printf("len:%d,%d %s\n", cstr_used(val),cstr_cap(val), val);
     }
     
     json_ctx_free(ctx);
@@ -50,13 +50,18 @@ int main(int argc, char *argv[]) {
   p = "{\"中文\":\"\\u6d4b\\u8bd5\"}";
   ctx = json_ctx_new();
   j = json_parse(ctx, p, strlen(p));
-  printf("%d\n", j);
   printf("unicode parse result:%d, %d\n", j, ctx->rs->o.dict->size);
   k = (cstr)ctx->rs->o.dict->head->key;
   printf("key:%s ", k);
-
+  printf("value:%s\n", json_get(ctx->rs, "中文")->o.str);
   printf("\n");
   json_ctx_free(ctx);
+
+  p = "[1]";
+  ctx = json_ctx_new();
+  j = json_parse(ctx, p, strlen(p));
+  printf("value:%lld \n", json_get(ctx->rs, "0")->o.i);
+  json_ctx_free(ctx);  
 
 
   p = "[{ \"1\":\"2\",}]";

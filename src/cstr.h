@@ -4,16 +4,16 @@
 
 #define cstr char *
 typedef struct {
+    uint32_t cap;
     uint32_t len;
-    uint32_t free;
     char buf[];
 } cstrhdr;
 
-#define HLEN sizeof(cstrhdr)
-#define CSTR_REALPTR(s) ((char*)(s - HLEN))
-#define CSTR_HDR(s) ((cstrhdr*)(s - HLEN))
-#define cstr_len(s) CSTR_HDR(s)->len
-#define CSTR_HDR_USED(s) (s->len - s->free)
+#define CSTRHLEN sizeof(cstrhdr)
+#define CSTR_REALPTR(s) ((char*)(s - CSTRHLEN))
+#define CSTR_HDR(s) ((cstrhdr*)(s - CSTRHLEN))
+#define cstr_cap(s) CSTR_HDR(s)->cap
+#define CSTR_HDR_USED(s) (s->len)
 #define cstr_used(s) (CSTR_HDR_USED(CSTR_HDR(s)))
 
 #ifdef __cplusplus
@@ -32,6 +32,16 @@ cstr cstr_cat_printf(cstr s, const char *fmt, ...);
 void cstr_toupper(cstr s);
 cstr cstr_extend(cstr s, size_t add);
 cstr* cstr_split(char *s, size_t len, const char *b, size_t slen, size_t *l);
+
+inline static cstr cstr_wrap(const char *buf, const char *s, size_t len) {
+  cstrhdr *hdr = (cstrhdr*)buf;
+  hdr->cap = 0;
+  hdr->len = len;
+  memcpy(hdr->buf, s, len);
+  hdr->buf[len] = 0;
+  return (cstr)hdr->buf;
+}
+
 inline static cstr cstr_cat(cstr s, const char *b) {
   return cstr_ncat(s, b, strlen(b));
 }
@@ -44,7 +54,7 @@ inline static cstr cstr_cat_char(cstr s, char c) {
     s = cstr_extend(s, 1);
   csh = CSTR_HDR(s);
   s[cstr_used(s)] = c;
-  csh->free--;
+  csh->len++;
   return s;
 }
 

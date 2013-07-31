@@ -7,15 +7,15 @@
 #include "cstr.h"
 #include "setting.h"
 
-#define CSH_USED(c) (c->len - c->free)
+#define CSH_USED(c) (c->len)
 
 cstr cstr_create(size_t len) {
   setting *setting = get_setting();
-  char *c = setting->malloc(len + HLEN + 1);
+  char *c = setting->malloc(len + CSTRHLEN + 1);
   cstrhdr *csh = (cstrhdr*)c;
-  csh->len = len;
-  csh->free = len;
-  csh->buf[len] = 0;
+  csh->cap = len;
+  csh->len = 0;
+  csh->buf[0] = 0;
   return (cstr)csh->buf;
 }
 
@@ -24,7 +24,7 @@ cstr cstr_new(const char *c, size_t len) {
   cstrhdr *csh = CSTR_HDR(s);
   memcpy(s, c, len);
   s[len] = '\0';
-  csh->free = 0;
+  csh->len = len;
   return s;
 }
 
@@ -38,10 +38,9 @@ cstr cstr_extend(cstr s, size_t add) {
   setting *setting = get_setting();
   cstrhdr *csh = CSTR_HDR(s);
   size_t used = CSTR_HDR_USED(csh);
-  if(csh->free >= add) return s;
-  csh->len = (used + add)*2;
-  csh = setting->realloc((void*)csh, csh->len + HLEN + 1);
-  csh->free = csh->len - used;
+  if((csh->cap - used) >= add) return s;
+  csh->cap = (used + add)*2;
+  csh = setting->realloc((void*)csh, csh->cap + CSTRHLEN + 1);
   return (cstr)csh->buf;
 }
 
@@ -52,7 +51,7 @@ cstr cstr_ncat(cstr s, const char *b, size_t l) {
   s = cstr_extend(s, l);
   csh = CSTR_HDR(s);
   memcpy(csh->buf + CSH_USED(csh), b, l);
-  csh->free -= l;
+  csh->len += l;
   s[CSTR_HDR_USED(csh)] = '\0';
   return (cstr)csh->buf;
 }
@@ -80,7 +79,7 @@ cstr* cstr_split(char *s, size_t len, const char *b, size_t slen, size_t *l) {
 
 void cstr_clear(cstr s) {
   cstrhdr *csh = CSTR_HDR(s);
-  csh->free = csh->len;
+  csh->len = 0;
   csh->buf[0] = '\0';
 }
 

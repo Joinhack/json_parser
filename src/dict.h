@@ -25,6 +25,10 @@ typedef struct dict {
   unsigned int size;
 } dict;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 dict *dict_new(dict_opts *opts);
 
 void dict_free(dict *d);
@@ -40,6 +44,11 @@ void dict_rehash(dict *d, unsigned int ns);
 dict_entry* dict_find(dict *d, void *k);
 
 unsigned int dict_generic_hash(const char *buf, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #define DICT_KEY_FREE(d, k) if(d->opts->key_free) d->opts->key_free(k)
 

@@ -48,12 +48,22 @@ typedef struct json_ctx {
   cstr token;
 } json_ctx;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 json_object *json_new(enum json_type);
 
 void json_free(json_object *o);
 
 json_ctx *json_ctx_new();
+
+static inline json_object *json_ctx_get_result(json_ctx *ctx) {
+  return ctx->rs;
+}
+
+json_object *json_get(json_object *o, const char* val);
 
 void json_ctx_free(json_ctx *ctx);
 
@@ -67,20 +77,9 @@ void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...);
 
 #ifdef USE_SETTING
 
-static inline void* setting_malloc(size_t s) {
-  setting *setting = get_setting();
-  return setting->malloc(s);
+#ifdef __cplusplus
 }
-
-static inline void* setting_realloc(void *p, size_t s) {
-  setting *setting = get_setting();
-  return setting->realloc(p, s);
-}
-
-static inline void setting_free(void *p) {
-  setting *setting = get_setting();
-  setting->free(p);
-}
+#endif
 
 #define malloc(s) setting_malloc(s)
 

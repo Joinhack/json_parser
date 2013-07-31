@@ -142,3 +142,21 @@ int json_parse_file(json_ctx *ctx, FILE *file) {
   return rs;
 }
 
+json_object *json_get(json_object *o, const char* val) {
+  if(o->o_type == json_type_object) {
+    size_t l = strlen(val);
+    dict_entry *entry;
+    char buf[l + CSTRHLEN + 1];
+    cstr s = cstr_wrap(buf, val, l);
+    entry = dict_find(o->o.dict, s);
+    if(entry)
+      return entry->value;
+  } else if(o->o_type == json_type_array) {
+    char *eptr;
+    long l = strtol(val, &eptr, 10);
+    if(l == 0 && errno == EINVAL)
+      return NULL;
+    return arraylist_get(o->o.array, (int)l);
+  }
+  return NULL;
+}
