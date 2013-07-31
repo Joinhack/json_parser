@@ -9,11 +9,17 @@
 
 void yyerror(json_ctx *ctx, void *scan, const char* fmt, ...) {
   va_list arg;
+  cstr err;
   ctx->token = cstr_ncat(ctx->token, yyget_text(scan), yyget_leng(scan));
   ctx->token[cstr_used(ctx->token)] = 0;
   va_start(arg, fmt);
-  ctx->err = cstr_cat_printf(ctx->err, fmt, arg);
+  err = ctx->err;
+  ctx->err = cstr_cat_printf(NULL, fmt, arg);
   va_end(arg);
+  if(err) {
+    ctx->err = cstr_cat_printf(ctx->err, ", detail:%s", err);
+    cstr_free(err);
+  }
 }
 
 json_ctx *json_ctx_new() {

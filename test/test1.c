@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   printf("result %d\n", j);
   json_ctx_free(ctx);
 
-  p = "{\"a1asd\":\"\\\\\\b\\naaa\",2:0.2}";
+  p = "{\"a1asd\":\"\\\\\\b\\naaa\",\"2\":0.2}";
   k = cstr_new("a1asd", 5);
   for(i = 0; i < 1; i++) {
     ctx = json_ctx_new();
@@ -32,6 +32,8 @@ int main(int argc, char *argv[]) {
     if(!j) {
       cstr val = ((json_object*)(dict_find(ctx->rs->o.dict, k)->value))->o.str;
       printf("len:%d,%d %s\n", cstr_used(val),cstr_cap(val), val);
+    } else {
+      printf("error:%s, line:%d col:%d token:%s\n", ctx->err, ctx->lineno, ctx->colno ,ctx->token);
     }
     
     json_ctx_free(ctx);

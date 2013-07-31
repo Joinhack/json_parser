@@ -12,10 +12,10 @@
 #define COLNO_ADD(i) (yyextra->colno += i)
 
 
-#define ERROR(fmt, arg...) yyerror(yyextra, yyscanner, fmt, ##arg)
+#define ERROR(m) yyextra->err = cstr_cat(yyextra->err, m)
 
-#define integer_overflow(text) \
-  ERROR("This integer is too big: \"%s\"\n", text)
+#define integer_overflow() \
+  ERROR("This integer is too big")
 
 
 static inline int append_char(json_ctx *ctx, char c) {
@@ -104,7 +104,7 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 <INITIAL>{intcosnt} {
   yylval->iconst = strtoll(yytext, NULL, 10);
   if (errno == ERANGE) {
-    integer_overflow(yytext);
+    integer_overflow();
     return -1;
   }
   COLNO_ADD(yyleng);
@@ -114,7 +114,7 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 <INITIAL>{hexconst} {
   yylval->iconst = strtoll(yytext+2, NULL, 16);
   if (errno == ERANGE) {
-    integer_overflow(yytext);
+    integer_overflow();
     return -1;
   }
   COLNO_ADD(yyleng);
@@ -134,7 +134,8 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 
 <INITIAL>[\[\]{},:"]   { COLNO_ADD(1); return yytext[0]; }
 
-<INITIAL>.   {
+<INITIAL>. {
+  ERROR("error charactor");
   return -1;
 }
 
@@ -186,6 +187,7 @@ utf8_4             [\xF0-\xF4][\x80-\xBF]{3}
 }
 
 <STRING_STATE>. {
+  ERROR("error charactor in string");
   return -1;
 }
 
