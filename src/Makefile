@@ -4,7 +4,7 @@ RANLIB=ranlib
 YACC=bison
 LEX=flex
 LDFLAGS=
-CFLAGS="-Wall" -g
+CFLAGS="-Wall" -g -c99
 
 
 YY_PREFIX=json_yy
