@@ -92,34 +92,6 @@ PAIR: str_const ':' VALUE {
   dict_replace(d, $1, $3);
   $$ = d;
 }
-| tok_int_constant ':' VALUE {
-  char *key;
-  dict *d = dict_new(&json_dict_opts);
-  FMT_KEY(key, "%lld", $1);
-  dict_replace(d, key, $3);
-  $$ = d;
-}
-| tok_double_constant ':' VALUE {
-  char *key;
-  dict *d = dict_new(&json_dict_opts);
-  FMT_KEY(key, "%lf", $1);
-  dict_replace(d, key, $3);
-  $$ = d;
-}
-|tok_null ':' VALUE {
-  char *key;
-  dict *d = dict_new(&json_dict_opts);
-  FMT_KEY(key, "%s", "null");
-  dict_replace(d, key, $3);
-  $$ = d;
-}
-|tok_bool_constant ':' VALUE {
-  char *key;
-  dict *d = dict_new(&json_dict_opts);
-  FMT_KEY(key, "%s", $1 == 1?"true":"false");
-  dict_replace(d, key, $3);
-  $$ = d;
-}
 
 ARRAY: '[' ']' {
   json_object *o = json_new(json_type_array);
